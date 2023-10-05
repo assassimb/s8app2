@@ -20,11 +20,6 @@ namespace Sanssoussi.Controllers
     {
         private readonly SqliteConnection _dbConnection;
 
-        private string SanitizeComment(string text)
-        {
-            return Regex.Replace(text, @"[^\sA-z0-9,.!]", " ", RegexOptions.IgnoreCase);
-        }
-
         private readonly ILogger<HomeController> _logger;
 
         private readonly UserManager<SanssoussiUser> _userManager;
@@ -77,13 +72,11 @@ namespace Sanssoussi.Controllers
                 throw new InvalidOperationException("Vous devez vous connecter");
             }
 
-            comment = SanitizeComment(comment);
-
             var cmd = new SqliteCommand(
                 "insert into Comments (UserId, CommentId, Comment) Values (@UserId, @CommentId, @Comment)", this._dbConnection);
                 cmd.Parameters.AddWithValue("@UserId", user.Id);
                 cmd.Parameters.AddWithValue("@CommentId", Guid.NewGuid());
-                cmd.Parameters.AddWithValue("@Comment", comment);
+                cmd.Parameters.AddWithValue("@Comment", System.Net.WebUtility.HtmlEncode(comment));
             this._dbConnection.Open();
             await cmd.ExecuteNonQueryAsync();
 
@@ -100,7 +93,11 @@ namespace Sanssoussi.Controllers
                 return this.View(searchResults);
             }
 
-            var cmd = new SqliteCommand($"Select Comment from Comments where UserId = '{user.Id}' and Comment like '%{searchData}%'", this._dbConnection);
+            var cmd = new SqliteCommand(
+            "Select Comment from Comments where UserId = @UserId and Comment like @SearchData", this._dbConnection);
+            cmd.Parameters.AddWithValue("@UserId", user.Id);
+            cmd.Parameters.AddWithValue("@SearchData", $"%{searchData}%");
+
             this._dbConnection.Open();
             var rd = await cmd.ExecuteReaderAsync();
             while (rd.Read())
