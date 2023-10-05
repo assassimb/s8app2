@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Identity;
@@ -18,6 +19,11 @@ namespace Sanssoussi.Controllers
     public class HomeController : Controller
     {
         private readonly SqliteConnection _dbConnection;
+
+        private string SanitizeComment(string text)
+        {
+            return Regex.Replace(text, @"[^\sA-z0-9,.!]", " ", RegexOptions.IgnoreCase);
+        }
 
         private readonly ILogger<HomeController> _logger;
 
@@ -71,9 +77,13 @@ namespace Sanssoussi.Controllers
                 throw new InvalidOperationException("Vous devez vous connecter");
             }
 
+            comment = SanitizeComment(comment);
+
             var cmd = new SqliteCommand(
-                $"insert into Comments (UserId, CommentId, Comment) Values ('{user.Id}','{Guid.NewGuid()}','" + comment + "')",
-                this._dbConnection);
+                "insert into Comments (UserId, CommentId, Comment) Values (@UserId, @CommentId, @Comment)", this._dbConnection);
+                cmd.Parameters.AddWithValue("@UserId", user.Id);
+                cmd.Parameters.AddWithValue("@CommentId", Guid.NewGuid());
+                cmd.Parameters.AddWithValue("@Comment", comment);
             this._dbConnection.Open();
             await cmd.ExecuteNonQueryAsync();
 
