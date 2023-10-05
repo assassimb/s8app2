@@ -33,14 +33,22 @@ namespace Sanssoussi
             else
             {
                 app.UseExceptionHandler("/Home/Error");
+                app.UseHsts();  // This middleware adds the Strict-Transport-Security header to HTTP responses.
             }
+            app.UseHttpsRedirection();
 
             app.UseStaticFiles();
 
             app.UseRouting();
+
             app.UseAuthentication();
 
+            app.UseHsts();
+
             app.UseAuthorization();
+
+            app.UseCookiePolicy();
+
 
             app.UseEndpoints(
                 endpoints =>
