@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Text.Encodings.Web;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Authentication;
@@ -28,6 +29,26 @@ namespace Sanssoussi.Areas.Identity.Pages.Account
         private readonly SignInManager<SanssoussiUser> _signInManager;
 
         private readonly UserManager<SanssoussiUser> _userManager;
+        public class NoTripleRepeatAttribute : ValidationAttribute
+        {
+            protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+            {
+                if (value == null)
+                {
+                    return ValidationResult.Success;
+                }
+
+                var input = value.ToString();
+                var regex = new Regex(@"(.)\1{2,}");
+
+                if (regex.IsMatch(input))
+                {
+                    return new ValidationResult("The field " + validationContext.DisplayName + " cannot have more than two repeating characters in a row.");
+                }
+
+                return ValidationResult.Success;
+            }
+        }
 
         [BindProperty]
         public InputModel Input { get; set; }
@@ -109,6 +130,7 @@ namespace Sanssoussi.Areas.Identity.Pages.Account
             [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 10)]
             [DataType(DataType.Password)]
             [Display(Name = "Password")]
+            [NoTripleRepeat]
             public string Password { get; set; }
 
             [DataType(DataType.Password)]
