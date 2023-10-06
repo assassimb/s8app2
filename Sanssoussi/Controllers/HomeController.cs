@@ -48,6 +48,8 @@ namespace Sanssoussi.Controllers
                 return this.View(comments);
             }
 
+            _logger.LogInformation("Fetching comments for the user at {Time} by {Username}", DateTime.UtcNow, user.UserName);
+
             var cmd = new SqliteCommand($"Select Comment from Comments where UserId ='{user.Id}'", this._dbConnection);
             this._dbConnection.Open();
             var rd = await cmd.ExecuteReaderAsync();
@@ -60,6 +62,7 @@ namespace Sanssoussi.Controllers
             rd.Close();
             this._dbConnection.Close();
 
+            _logger.LogInformation($"Fetched {comments.Count} comments for the user at " + "{Time} by {Username}", DateTime.UtcNow, user.UserName);
             return this.View(comments);
         }
 
@@ -72,6 +75,8 @@ namespace Sanssoussi.Controllers
                 throw new InvalidOperationException("Vous devez vous connecter");
             }
 
+            _logger.LogInformation("Attempting to add a comment to the database  at {Time} by {Username}", DateTime.UtcNow, user.UserName);
+
             var cmd = new SqliteCommand(
                 "insert into Comments (UserId, CommentId, Comment) Values (@UserId, @CommentId, @Comment)", this._dbConnection);
                 cmd.Parameters.AddWithValue("@UserId", user.Id);
@@ -80,6 +85,7 @@ namespace Sanssoussi.Controllers
             this._dbConnection.Open();
             await cmd.ExecuteNonQueryAsync();
 
+            _logger.LogInformation("Comment added successfully at {Time} by {Username}", DateTime.UtcNow, user.UserName);
             return this.Ok("Commentaire ajouté");
         }
 
@@ -92,6 +98,8 @@ namespace Sanssoussi.Controllers
             {
                 return this.View(searchResults);
             }
+
+            _logger.LogInformation("Attempting to search comments in the database at {Time} by {Username}", DateTime.UtcNow, user.UserName);
 
             var cmd = new SqliteCommand(
             "Select Comment from Comments where UserId = @UserId and Comment like @SearchData", this._dbConnection);
@@ -108,6 +116,7 @@ namespace Sanssoussi.Controllers
             rd.Close();
             this._dbConnection.Close();
 
+            _logger.LogInformation($"Searched comments from {searchData} in the database at " + "{Time} by {Username}", DateTime.UtcNow, user.UserName);
             return this.View(searchResults);
         }
 

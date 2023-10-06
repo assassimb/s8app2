@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Authentication.Google;
 
 namespace Sanssoussi
 {
@@ -30,6 +31,17 @@ namespace Sanssoussi
             });
             services.AddRazorPages();
             services.AddControllersWithViews();
+
+            services.AddAuthentication()
+            .AddCookie()
+            .AddGoogle(options =>
+            {
+                IConfigurationSection googleAuth = Configuration.GetSection("Authentication:Google");
+                options.ClientId = googleAuth["ClientId"];
+                options.ClientSecret = googleAuth["ClientSecret"];
+            });
+
+            services.AddLogging();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -46,17 +58,15 @@ namespace Sanssoussi
                 app.UseHsts();  // This middleware adds the Strict-Transport-Security header to HTTP responses.
             }
 
-            app.UseCors("Corsingtime");  // Apply the CORS policy
-
             app.UseHttpsRedirection();
 
             app.UseStaticFiles();
 
             app.UseRouting();
 
-            app.UseAuthentication();
+            app.UseCors("Corsingtime"); // Apply the CORS policy
 
-            app.UseHsts();
+            app.UseAuthentication();
 
             app.UseAuthorization();
 
